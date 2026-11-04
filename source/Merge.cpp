@@ -44,6 +44,13 @@ namespace merge
 			int redRows = 0;
 		};
 
+		struct LeftOut
+		{
+			RE::FormID id = 0;
+			std::string name;
+			const char* why = "";
+		};
+
 		std::atomic<ApiState> g_api{ ApiState::kNotChecked };
 		std::atomic<QuickLootAction> g_action{ QuickLootAction::kNone };  // the action QuickLoot IE is about to run (it runs in the same call)
 
@@ -55,6 +62,7 @@ namespace merge
 			std::string focusName;
 			std::vector<SourceInfo> sources;
 			int refused = 0;
+			std::vector<LeftOut> leftOut;
 			double scanMs = 0.0;
 			std::uint64_t scans = 0;
 			std::uint64_t taken = 0;
@@ -175,22 +183,26 @@ namespace merge
 			return nullptr;
 		}
 
-		// The allowed sources in the focus's own cell. The cell is walked under its lock, so only handles are gathered inside.
-		std::vector<RE::TESObjectREFRPtr> FindSources(RE::TESObjectREFR& a_focus, int& a_refused)
+		// The allowed sources in range: the interior, or every loaded exterior cell, so a body over a cell border is found. The cells
+		// are walked under their locks, so only handles are gathered inside.
+		std::vector<RE::TESObjectREFRPtr> FindSources(RE::TESObjectREFR& a_focus, int& a_refused, std::vector<LeftOut>& a_leftOut)
 		{
 			std::vector<RE::TESObjectREFRPtr> sources;
-			auto* cell = a_focus.GetParentCell();
-			if (!cell)
+			auto* tes = RE::TES::GetSingleton();
+			if (!tes)
 			{
-				logger::debug("merge: {:08X} has no parent cell; nothing merged", a_focus.GetFormID());
+				logger::debug("merge: no TES singleton; nothing merged");
 				return sources;
 			}
 
 			std::vector<RE::ObjectRefHandle> inRange;
-			cell->ForEachReferenceInRange(a_focus.GetPosition(), settings::radius.load(), [&inRange](RE::TESObjectREFR* a_ref) {
+			tes->ForEachReferenceInRange(&a_focus, settings::radius.load(), [&inRange](RE::TESObjectREFR* a_ref) {
 				if (a_ref && (a_ref->HasContainer() || a_ref->extraList.HasType(RE::ExtraDataType::kAshPileRef))) { inRange.push_back(a_ref->GetHandle()); }
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
+
+			// Bodies merge only with bodies, containers only with containers: a corpse's list never fills up with the barrels around it.
+			const bool focusIsBody = a_focus.As<RE::Actor>() || a_focus.extraList.HasType(RE::ExtraDataType::kAshPileRef);
 
 			std::unordered_set<RE::FormID> seen{ a_focus.GetFormID() };
 			for (const auto& handle : inRange)
@@ -205,10 +217,13 @@ namespace merge
 					if (!ref) { continue; }
 				}
 				if (!seen.insert(ref->GetFormID()).second) { continue; }
-				if (const char* why = WhyRefused(*ref, viaAshPile))
+				const bool isBody = viaAshPile || ref->As<RE::Actor>();
+				if (const char* why = isBody != focusIsBody ? "the other group" : WhyRefused(*ref, viaAshPile))
 				{
 					logger::trace("merge: {:08X} left out: {}", ref->GetFormID(), why);
 					++a_refused;
+					const char* name = ref->GetDisplayFullName();
+					a_leftOut.push_back({ ref->GetFormID(), name ? name : "", why });
 					continue;
 				}
 				sources.push_back(std::move(ref));
@@ -294,6 +309,7 @@ namespace merge
 			g_state.focus = 0;
 			g_state.focusName.clear();
 			g_state.refused = 0;
+			g_state.leftOut.clear();
 
 			if (!a_event || !settings::enabled.load()) { return; }
 			const auto focus = a_event->container.get();
@@ -304,7 +320,7 @@ namespace merge
 			g_state.focus = focus->GetFormID();
 			g_state.focusName = focusName ? focusName : "";
 
-			const auto sources = FindSources(*focus, g_state.refused);
+			const auto sources = FindSources(*focus, g_state.refused, g_state.leftOut);
 			for (const auto& source : sources)
 			{
 				const char* name = source->GetDisplayFullName();
@@ -524,6 +540,12 @@ namespace merge
 	std::string StateJson()
 	{
 		std::scoped_lock lock(g_lock);
+		std::string leftOut;
+		for (const auto& l : g_state.leftOut)
+		{
+			if (!leftOut.empty()) { leftOut += ','; }
+			leftOut += std::format(R"({{"id":"{:08X}","name":"{}","why":"{}"}})", l.id, JsonText(l.name), l.why);
+		}
 		std::string sources;
 		int rows = 0;
 		for (const auto& s : g_state.sources)
@@ -533,9 +555,9 @@ namespace merge
 			rows += s.rows;
 		}
 		return std::format(
-			R"("quickLoot":"{}","enabled":{},"radius":{},"lineOfSight":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
+			R"("quickLoot":"{}","enabled":{},"radius":{},"lineOfSight":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"leftOutList":[{}],"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
 			ApiName(g_api.load()), settings::enabled.load(), settings::radius.load(), settings::lineOfSight.load(), g_state.focus, JsonText(g_state.focusName), rows, sources,
-			g_state.refused, g_state.scanMs, g_state.scans, g_state.taken, g_state.leftRed, g_state.sourceGone, g_merchantChests.size());
+			g_state.refused, leftOut, g_state.scanMs, g_state.scans, g_state.taken, g_state.leftRed, g_state.sourceGone, g_merchantChests.size());
 	}
 
 	bool Action(std::string_view a_name)

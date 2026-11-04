@@ -98,7 +98,7 @@ namespace page
 				settings::radius = radius;
 				changed = true;
 			}
-			Help(TR("QCM_HelpRadius", "How far around what the crosshair is on to look, in the same cell. About 70 game units is one metre."));
+			Help(TR("QCM_HelpRadius", "How far around what the crosshair is on to look. About 70 game units is one metre."));
 			PopItemWidth();
 
 			changed |= ToggleRow(TR("QCM_LineOfSight", "Only what you can see"), settings::lineOfSight,

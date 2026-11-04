@@ -1,11 +1,11 @@
 QuickLoot Container Merge
 Version 1.0.0
 
-Look at a chest or a body, and QuickLoot IE's window also lists what the containers and bodies around it hold. One window for
+Look at a chest or a body, and QuickLoot IE's window also lists what the others of its kind around it hold: a body the other bodies, a chest the other containers. One window for
 the whole pile of bandits.
 
 WHAT GOES IN THE LIST
-The other containers and dead bodies within the radius of what the crosshair is on, in the same cell. Empty ones add nothing.
+On a body, the other dead bodies within the radius; on a container, the other containers. The two never mix. Empty ones add nothing.
 Locked containers, summoned creatures, merchant chests, anything marked QuickLootIE_Exclude and your own storage stay out.
 
 TAKING
