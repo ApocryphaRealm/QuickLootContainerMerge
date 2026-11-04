@@ -92,13 +92,20 @@ namespace page
 			changed |= ToggleRow(TR("QCM_Enabled", "Enabled"), settings::enabled, TR("QCM_HelpEnabled", "Off: the loot window shows only what the crosshair is on, as QuickLoot IE does alone."));
 
 			PushItemWidth(260.0f);
-			float radius = settings::radius.load();
-			if (precise::SliderFloat(TR("QCM_Radius", "Radius").c_str(), &radius, settings::kRadiusMin, settings::kRadiusMax, "%.0f"))
+			float interior = settings::interiorFeet.load();
+			if (precise::SliderFloat(TR("QCM_InteriorFeet", "Indoors, feet").c_str(), &interior, settings::kFeetMin, settings::kFeetMax, "%.0f"))
 			{
-				settings::radius = radius;
+				settings::interiorFeet = interior;
 				changed = true;
 			}
-			Help(TR("QCM_HelpRadius", "How far around what the crosshair is on to look. About 70 game units is one metre."));
+			Help(TR("QCM_HelpInteriorFeet", "How far around you to look for others of the same kind, indoors."));
+			float exterior = settings::exteriorFeet.load();
+			if (precise::SliderFloat(TR("QCM_ExteriorFeet", "Outdoors, feet").c_str(), &exterior, settings::kFeetMin, settings::kFeetMax, "%.0f"))
+			{
+				settings::exteriorFeet = exterior;
+				changed = true;
+			}
+			Help(TR("QCM_HelpExteriorFeet", "How far around you to look for others of the same kind, outdoors."));
 			PopItemWidth();
 
 			changed |= ToggleRow(TR("QCM_LineOfSight", "Only what you can see"), settings::lineOfSight,

@@ -1,7 +1,7 @@
 // QuickLoot Container Merge - own code, GPL-3.0-or-later.
 //
 // How the merge works, against QuickLoot IE 4.1's public API (include/QuickLootAPI.h, MIT):
-//   ModifyInventory  when the window builds its list, the rows of every other allowed source within the radius go in behind the
+//   ModifyInventory  when the window builds its list, the rows of every other allowed source of its kind within the distance around the player go in behind the
 //                    rows of what the crosshair is on. Each row is a new InventoryEntryData, which QuickLoot IE then owns.
 //   ModifyItemData   a row's red colour is worked out for ITS source, not for the container the window is showing.
 //   ModifyButtonBar  the same for the Take/Steal button while such a row is selected.
@@ -196,7 +196,15 @@ namespace merge
 			}
 
 			std::vector<RE::ObjectRefHandle> inRange;
-			tes->ForEachReferenceInRange(&a_focus, settings::radius.load(), [&inRange](RE::TESObjectREFR* a_ref) {
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player)
+			{
+				logger::debug("merge: no player; nothing merged");
+				return sources;
+			}
+			const auto* cell = player->GetParentCell();
+			const float feet = cell && cell->IsInteriorCell() ? settings::interiorFeet.load() : settings::exteriorFeet.load();
+			tes->ForEachReferenceInRange(player, feet * settings::kUnitsPerFoot, [&inRange](RE::TESObjectREFR* a_ref) {
 				if (a_ref && (a_ref->HasContainer() || a_ref->extraList.HasType(RE::ExtraDataType::kAshPileRef))) { inRange.push_back(a_ref->GetHandle()); }
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
@@ -555,8 +563,8 @@ namespace merge
 			rows += s.rows;
 		}
 		return std::format(
-			R"("quickLoot":"{}","enabled":{},"radius":{},"lineOfSight":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"leftOutList":[{}],"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
-			ApiName(g_api.load()), settings::enabled.load(), settings::radius.load(), settings::lineOfSight.load(), g_state.focus, JsonText(g_state.focusName), rows, sources,
+			R"("quickLoot":"{}","enabled":{},"interiorFeet":{},"exteriorFeet":{},"lineOfSight":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"leftOutList":[{}],"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
+			ApiName(g_api.load()), settings::enabled.load(), settings::interiorFeet.load(), settings::exteriorFeet.load(), settings::lineOfSight.load(), g_state.focus, JsonText(g_state.focusName), rows, sources,
 			g_state.refused, leftOut, g_state.scanMs, g_state.scans, g_state.taken, g_state.leftRed, g_state.sourceGone, g_merchantChests.size());
 	}
 

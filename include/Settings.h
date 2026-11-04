@@ -13,16 +13,19 @@ namespace settings
 	{
 		static constexpr std::uint32_t logLevel = 2;
 		static constexpr bool enabled = true;
-		static constexpr float radius = 500.0f;
+		static constexpr float interiorFeet = 10.0f;
+		static constexpr float exteriorFeet = 35.0f;
 		static constexpr bool lineOfSight = false;
 	};
 
-	inline constexpr float kRadiusMin = 100.0f;
-	inline constexpr float kRadiusMax = 3000.0f;
+	inline constexpr float kFeetMin = 3.0f;
+	inline constexpr float kFeetMax = 150.0f;
+	inline constexpr float kUnitsPerFoot = 21.33f;   // 70 game units are one metre; the compass counts in feet too
 
 	inline std::atomic<std::uint32_t> logLevel{ Defaults::logLevel };
 	inline std::atomic<bool> enabled{ Defaults::enabled };          // bEnabled:General - the whole mod
-	inline std::atomic<float> radius{ Defaults::radius };           // fRadius:General - game units around what the crosshair is on
+	inline std::atomic<float> interiorFeet{ Defaults::interiorFeet };  // fInteriorFeet:General - how far around the player to look indoors
+	inline std::atomic<float> exteriorFeet{ Defaults::exteriorFeet };  // fExteriorFeet:General - how far around the player to look outdoors
 	inline std::atomic<bool> lineOfSight{ Defaults::lineOfSight };  // bLineOfSight:General - only sources the player can see
 
 	void Load();             // at plugin load; a missing INI or line keeps the default

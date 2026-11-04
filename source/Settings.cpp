@@ -138,7 +138,8 @@ namespace settings
 	{
 		logLevel = Defaults::logLevel;
 		enabled = Defaults::enabled;
-		radius = Defaults::radius;
+		interiorFeet = Defaults::interiorFeet;
+		exteriorFeet = Defaults::exteriorFeet;
 		lineOfSight = Defaults::lineOfSight;
 	}
 
@@ -154,9 +155,10 @@ namespace settings
 		const auto k = ReadKeys(g_iniPath);
 		ReadUInt(k, "uloglevel:debug", logLevel);
 		ReadBool(k, "benabled:general", enabled);
-		ReadFloat(k, "fradius:general", radius, kRadiusMin, kRadiusMax);
+		ReadFloat(k, "finteriorfeet:general", interiorFeet, kFeetMin, kFeetMax);
+		ReadFloat(k, "fexteriorfeet:general", exteriorFeet, kFeetMin, kFeetMax);
 		ReadBool(k, "blineofsight:general", lineOfSight);
-		logger::info("settings: {} read: enabled {}, radius {}, line of sight {}", g_iniPath, enabled.load(), radius.load(), lineOfSight.load());
+		logger::info("settings: {} read: enabled {}, interior {} ft, exterior {} ft, line of sight {}", g_iniPath, enabled.load(), interiorFeet.load(), exteriorFeet.load(), lineOfSight.load());
 	}
 
 	bool Save()
@@ -165,7 +167,8 @@ namespace settings
 		auto lines = ReadLines(g_iniPath);
 		WriteKey(lines, "Debug", "uLogLevel", std::to_string(logLevel.load()));
 		WriteKey(lines, "General", "bEnabled", enabled ? "1" : "0");
-		WriteKey(lines, "General", "fRadius", std::format("{:g}", radius.load()));
+		WriteKey(lines, "General", "fInteriorFeet", std::format("{:g}", interiorFeet.load()));
+		WriteKey(lines, "General", "fExteriorFeet", std::format("{:g}", exteriorFeet.load()));
 		WriteKey(lines, "General", "bLineOfSight", lineOfSight ? "1" : "0");
 		std::ofstream file(g_iniPath, std::ios::trunc);
 		if (!file)

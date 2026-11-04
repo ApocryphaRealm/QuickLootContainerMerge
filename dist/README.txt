@@ -5,7 +5,7 @@ Look at a chest or a body, and QuickLoot IE's window also lists what the others 
 the whole pile of bandits.
 
 WHAT GOES IN THE LIST
-On a body, the other dead bodies within the radius; on a container, the other containers. The two never mix. Empty ones add nothing.
+On a body, the other dead bodies near you; on a container, the other containers near you. The two never mix. Near means 10 feet indoors and 35 feet outdoors by default. Empty ones add nothing.
 Locked containers, summoned creatures, merchant chests, anything marked QuickLootIE_Exclude and your own storage stay out.
 
 TAKING
@@ -16,7 +16,7 @@ on something already owned by someone else takes everything, red rows too. Closi
 QuickLoot IE does.
 
 SETTINGS
-QuickLoot Container Merge in the Apocrypha Menu Framework: on or off, the radius (500 game units by default, about 7 metres), and
+QuickLoot Container Merge in the Apocrypha Menu Framework: on or off, the indoor and outdoor distances, and
 whether only what you can see is listed. All of it is also in SKSE\Plugins\QuickLootContainerMerge.ini, so the mod works the same
 without a menu framework.
 

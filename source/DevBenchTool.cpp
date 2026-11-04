@@ -44,7 +44,8 @@ namespace DevBenchTool
 			try
 			{
 				if (a_name == "bEnabled") { settings::enabled = a_value == "1"; }
-				else if (a_name == "fRadius") { settings::radius = std::clamp(std::stof(a_value), settings::kRadiusMin, settings::kRadiusMax); }
+				else if (a_name == "fInteriorFeet") { settings::interiorFeet = std::clamp(std::stof(a_value), settings::kFeetMin, settings::kFeetMax); }
+				else if (a_name == "fExteriorFeet") { settings::exteriorFeet = std::clamp(std::stof(a_value), settings::kFeetMin, settings::kFeetMax); }
 				else if (a_name == "bLineOfSight") { settings::lineOfSight = a_value == "1"; }
 				else { return false; }
 			}
