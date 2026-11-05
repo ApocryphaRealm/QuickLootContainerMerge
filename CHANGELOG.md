@@ -2,7 +2,7 @@
 
 Rule 61: this mod's own history, kept beside the code it describes.
 
-## 1.0.0 - 2026-11-04 - untested
+## 1.0.0 - 2026-11-04 - working
 
 ### Added
 - QuickLoot IE's window also lists the items of others of its kind within a radius of what the crosshair is on, across the loaded cells: a body lists the other dead bodies, a container the other containers, and the two never mix.
