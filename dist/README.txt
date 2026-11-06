@@ -28,5 +28,10 @@ KNOWN LIMITS
 The same item from two sources is two rows. The window's title names what the crosshair is on. A body just across an outdoor cell
 border is not listed until you look at something on its side. Search opens only what the crosshair is on.
 
+CREDITS
+QuickLoot IE (MissCorruption and AtomCrafty, Nexus 120075), whose public API this mod is built on. CommonLibSSE NG and its
+contributors, and the libraries listed in THIRD_PARTY_NOTICES.md. Inspired by The Witcher 3: Wild Hunt (next-gen / Remastered),
+credit for the idea only.
+
 SOURCE
 GPL-3.0-or-later. https://github.com/ApocryphaRealm/QuickLootContainerMerge
