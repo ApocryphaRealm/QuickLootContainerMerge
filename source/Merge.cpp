@@ -68,6 +68,7 @@ namespace merge
 			std::uint64_t taken = 0;
 			std::uint64_t leftRed = 0;
 			std::uint64_t sourceGone = 0;
+			int stealRowsDropped = 0;  // the last list: rows left out because taking them would be stealing (bIncludeStealing=0)
 		} g_state;
 
 		std::unordered_set<RE::FormID> g_merchantChests;
@@ -174,6 +175,10 @@ namespace merge
 			{
 				return "the player's own";  // a storage room would otherwise pour into one window, and Take All would empty it
 			}
+			else if (!settings::includeStealing.load() && a_ref.GetOwner())
+			{
+				return "would be stolen";  // someone else's container: every row of it would be a theft (bIncludeStealing=0)
+			}
 
 			if (settings::lineOfSight.load())
 			{
@@ -209,8 +214,10 @@ namespace merge
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
 
-			// Bodies merge only with bodies, containers only with containers: a corpse's list never fills up with the barrels around it.
+			// Bodies merge only with bodies, containers only with containers, so a corpse's list never fills up with the barrels around
+			// it - unless bMixBodiesAndContainers is on, when both kinds share the list. Every other exclusion applies either way.
 			const bool focusIsBody = a_focus.As<RE::Actor>() || a_focus.extraList.HasType(RE::ExtraDataType::kAshPileRef);
+			const bool mix = settings::mixKinds.load();
 
 			std::unordered_set<RE::FormID> seen{ a_focus.GetFormID() };
 			for (const auto& handle : inRange)
@@ -226,14 +233,16 @@ namespace merge
 				}
 				if (!seen.insert(ref->GetFormID()).second) { continue; }
 				const bool isBody = viaAshPile || ref->As<RE::Actor>();
-				if (const char* why = isBody != focusIsBody ? "the other group" : WhyRefused(*ref, viaAshPile))
+				const char* name = ref->GetDisplayFullName();
+				if (const char* why = !mix && isBody != focusIsBody ? "the other kind (mixing is off)" : WhyRefused(*ref, viaAshPile))
 				{
-					logger::trace("merge: {:08X} left out: {}", ref->GetFormID(), why);
+					logger::debug("merge: {:08X} \"{}\" left out: {}", ref->GetFormID(), name ? name : "", why);
 					++a_refused;
-					const char* name = ref->GetDisplayFullName();
 					a_leftOut.push_back({ ref->GetFormID(), name ? name : "", why });
 					continue;
 				}
+				logger::debug("merge: {:08X} \"{}\" merged: {}{}", ref->GetFormID(), name ? name : "", isBody ? "body" : "container",
+					isBody != focusIsBody ? " (the other kind, mixing is on)" : "");
 				sources.push_back(std::move(ref));
 			}
 			return sources;
@@ -241,8 +250,9 @@ namespace merge
 
 		// One source's rows, built as the game's container menu counts them: changed entries, plus the base container's counts unless
 		// the entry is levelled, and every dropped item as a row of its own.
-		void AddRows(RE::TESObjectREFR& a_source, RE::BSTArray<ItemStack>& a_inventory, SourceInfo& a_info)
+		void AddRows(RE::TESObjectREFR& a_source, RE::BSTArray<ItemStack>& a_inventory, SourceInfo& a_info, int& a_stealDropped)
 		{
+			const bool includeStealing = settings::includeStealing.load();
 			auto* changes = a_source.GetInventoryChanges();
 			if (auto* actor = a_source.As<RE::Actor>(); actor && changes) { RefreshEnchantedWeapons(actor, changes); }
 
@@ -288,6 +298,14 @@ namespace merge
 					continue;
 				}
 				const bool stealing = RowIsStealing(a_source, *entry);
+				if (stealing && !includeStealing)
+				{
+					// bIncludeStealing=0: a row that would be a theft (an item owned apart from its container) never reaches the list.
+					logger::debug("merge: {:08X}: \"{}\" left out: would be stolen", a_source.GetFormID(), entry->GetDisplayName());
+					++a_stealDropped;
+					delete entry;
+					continue;
+				}
 				a_inventory.push_back(ItemStack{ entry, {} });
 				g_rows.emplace(entry, Row{ sourceHandle, stealing });
 				++a_info.rows;
@@ -318,6 +336,7 @@ namespace merge
 			g_state.focusName.clear();
 			g_state.refused = 0;
 			g_state.leftOut.clear();
+			g_state.stealRowsDropped = 0;
 
 			if (!a_event || !settings::enabled.load()) { return; }
 			const auto focus = a_event->container.get();
@@ -333,14 +352,16 @@ namespace merge
 			{
 				const char* name = source->GetDisplayFullName();
 				SourceInfo info{ source->GetFormID(), name ? name : "" };
-				AddRows(*source, a_event->inventory, info);
+				AddRows(*source, a_event->inventory, info, g_state.stealRowsDropped);
+				logger::debug("merge: {:08X} \"{}\": {} row(s), {} red", info.id, info.name, info.rows, info.redRows);
 				if (info.rows > 0) { g_state.sources.push_back(std::move(info)); }  // an empty source adds nothing and is not counted
 			}
 
 			g_state.scanMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
 			++g_state.scans;
-			logger::debug("merge: {:08X} \"{}\": {} source(s) with items, {} left out, list now {} rows, {:.2f} ms",
-				g_state.focus, g_state.focusName, g_state.sources.size(), g_state.refused, a_event->inventory.size(), g_state.scanMs);
+			logger::debug("merge: {:08X} \"{}\": {} source(s) with items, {} left out, {} would-be-stolen row(s) dropped, list now {} rows, {:.2f} ms (mix {}, include stealing {})",
+				g_state.focus, g_state.focusName, g_state.sources.size(), g_state.refused, g_state.stealRowsDropped, a_event->inventory.size(), g_state.scanMs,
+				settings::mixKinds.load(), settings::includeStealing.load());
 		}
 
 		// The row's copy of QuickLoot IE's ItemStack::Take, against the row's true source.
@@ -563,9 +584,9 @@ namespace merge
 			rows += s.rows;
 		}
 		return std::format(
-			R"("quickLoot":"{}","enabled":{},"interiorFeet":{},"exteriorFeet":{},"lineOfSight":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"leftOutList":[{}],"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
-			ApiName(g_api.load()), settings::enabled.load(), settings::interiorFeet.load(), settings::exteriorFeet.load(), settings::lineOfSight.load(), g_state.focus, JsonText(g_state.focusName), rows, sources,
-			g_state.refused, leftOut, g_state.scanMs, g_state.scans, g_state.taken, g_state.leftRed, g_state.sourceGone, g_merchantChests.size());
+			R"("quickLoot":"{}","enabled":{},"interiorFeet":{},"exteriorFeet":{},"lineOfSight":{},"mixBodiesAndContainers":{},"includeStealing":{},"focus":"{:08X}","focusName":"{}","mergedRows":{},"sources":[{}],"leftOut":{},"leftOutList":[{}],"stealRowsDropped":{},"scanMs":{:.2f},"scans":{},"taken":{},"leftRed":{},"sourceGone":{},"merchantChests":{})",
+			ApiName(g_api.load()), settings::enabled.load(), settings::interiorFeet.load(), settings::exteriorFeet.load(), settings::lineOfSight.load(), settings::mixKinds.load(), settings::includeStealing.load(), g_state.focus, JsonText(g_state.focusName), rows, sources,
+			g_state.refused, leftOut, g_state.stealRowsDropped, g_state.scanMs, g_state.scans, g_state.taken, g_state.leftRed, g_state.sourceGone, g_merchantChests.size());
 	}
 
 	bool Action(std::string_view a_name)

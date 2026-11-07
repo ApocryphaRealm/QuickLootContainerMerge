@@ -110,6 +110,10 @@ namespace page
 
 			changed |= ToggleRow(TR("QCM_LineOfSight", "Only what you can see"), settings::lineOfSight,
 				TR("QCM_HelpLineOfSight", "On: a container or body you have no line of sight to, such as one behind a wall, stays out of the list."));
+			changed |= ToggleRow(TR("QCM_MixKinds", "Mix bodies and containers"), settings::mixKinds,
+				TR("QCM_HelpMixKinds", "On: a body also lists the containers nearby, and a container the bodies, in one list. Locked containers, merchant chests, your own storage and summoned creatures still stay out. Off: bodies with bodies, containers with containers."));
+			changed |= ToggleRow(TR("QCM_IncludeStealing", "Include items you'd have to steal"), settings::includeStealing,
+				TR("QCM_HelpIncludeStealing", "On: nearby items that belong to someone else are listed in red with Steal, and taking them is a crime. Off: they are left out of the list. What the crosshair is on is shown as QuickLoot IE shows it."));
 
 			Spacing();
 			if (Button(TR("QCM_Restore", "Restore defaults").c_str()))

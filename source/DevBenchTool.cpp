@@ -47,6 +47,8 @@ namespace DevBenchTool
 				else if (a_name == "fInteriorFeet") { settings::interiorFeet = std::clamp(std::stof(a_value), settings::kFeetMin, settings::kFeetMax); }
 				else if (a_name == "fExteriorFeet") { settings::exteriorFeet = std::clamp(std::stof(a_value), settings::kFeetMin, settings::kFeetMax); }
 				else if (a_name == "bLineOfSight") { settings::lineOfSight = a_value == "1"; }
+				else if (a_name == "bMixBodiesAndContainers") { settings::mixKinds = a_value == "1"; }
+				else if (a_name == "bIncludeStealing") { settings::includeStealing = a_value == "1"; }
 				else { return false; }
 			}
 			catch (...)
@@ -101,8 +103,8 @@ namespace DevBenchTool
 		}
 		constexpr const char* descriptor =
 			"{"
-			"\"description\":\"QuickLoot Container Merge live state and driver. op=state (default): settings, QuickLoot IE's connection, what the last list merged (each source's form id, name, rows and red rows), how many references were left out, scan time, counters. "
-			"op=action name=take|takeall|use|up|down|transfer: QuickLoot IE's own input action. op=focus ref=<hex form id>: opens the window on that reference without the crosshair. op=unfocus: back to the crosshair. op=set name=<INI key> value=<v>: sets and saves. op=restore: defaults, saved. op=reload: re-reads the INI.\","
+			"\"description\":\"QuickLoot Container Merge live state and driver. op=state (default): settings, QuickLoot IE's connection, what the last list merged (each source's form id, name, rows and red rows), how many references were left out and why (leftOutList), how many would-be-stolen rows were dropped (stealRowsDropped), scan time, counters. "
+			"op=action name=take|takeall|use|up|down|transfer: QuickLoot IE's own input action. op=focus ref=<hex form id>: opens the window on that reference without the crosshair. op=unfocus: back to the crosshair. op=set name=<INI key> value=<v>: sets and saves (bEnabled, fInteriorFeet, fExteriorFeet, bLineOfSight, bMixBodiesAndContainers, bIncludeStealing). op=restore: defaults, saved. op=reload: re-reads the INI.\","
 			"\"inputSchema\":{\"type\":\"object\",\"properties\":{\"op\":{\"type\":\"string\"},\"ref\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}},"
 			"\"readOnly\":false"
 			"}";

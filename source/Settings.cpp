@@ -141,6 +141,8 @@ namespace settings
 		interiorFeet = Defaults::interiorFeet;
 		exteriorFeet = Defaults::exteriorFeet;
 		lineOfSight = Defaults::lineOfSight;
+		mixKinds = Defaults::mixKinds;
+		includeStealing = Defaults::includeStealing;
 	}
 
 	void Load()
@@ -158,7 +160,10 @@ namespace settings
 		ReadFloat(k, "finteriorfeet:general", interiorFeet, kFeetMin, kFeetMax);
 		ReadFloat(k, "fexteriorfeet:general", exteriorFeet, kFeetMin, kFeetMax);
 		ReadBool(k, "blineofsight:general", lineOfSight);
-		logger::info("settings: {} read: enabled {}, interior {} ft, exterior {} ft, line of sight {}", g_iniPath, enabled.load(), interiorFeet.load(), exteriorFeet.load(), lineOfSight.load());
+		ReadBool(k, "bmixbodiesandcontainers:general", mixKinds);
+		ReadBool(k, "bincludestealing:general", includeStealing);
+		logger::info("settings: {} read: enabled {}, interior {} ft, exterior {} ft, line of sight {}, mix bodies and containers {}, include stealing {}", g_iniPath,
+			enabled.load(), interiorFeet.load(), exteriorFeet.load(), lineOfSight.load(), mixKinds.load(), includeStealing.load());
 	}
 
 	bool Save()
@@ -170,6 +175,8 @@ namespace settings
 		WriteKey(lines, "General", "fInteriorFeet", std::format("{:g}", interiorFeet.load()));
 		WriteKey(lines, "General", "fExteriorFeet", std::format("{:g}", exteriorFeet.load()));
 		WriteKey(lines, "General", "bLineOfSight", lineOfSight ? "1" : "0");
+		WriteKey(lines, "General", "bMixBodiesAndContainers", mixKinds ? "1" : "0");
+		WriteKey(lines, "General", "bIncludeStealing", includeStealing ? "1" : "0");
 		std::ofstream file(g_iniPath, std::ios::trunc);
 		if (!file)
 		{

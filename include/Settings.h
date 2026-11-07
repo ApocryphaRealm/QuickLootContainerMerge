@@ -16,6 +16,8 @@ namespace settings
 		static constexpr float interiorFeet = 10.0f;
 		static constexpr float exteriorFeet = 35.0f;
 		static constexpr bool lineOfSight = false;
+		static constexpr bool mixKinds = false;
+		static constexpr bool includeStealing = true;
 	};
 
 	inline constexpr float kFeetMin = 3.0f;
@@ -27,6 +29,8 @@ namespace settings
 	inline std::atomic<float> interiorFeet{ Defaults::interiorFeet };  // fInteriorFeet:General - how far around the player to look indoors
 	inline std::atomic<float> exteriorFeet{ Defaults::exteriorFeet };  // fExteriorFeet:General - how far around the player to look outdoors
 	inline std::atomic<bool> lineOfSight{ Defaults::lineOfSight };  // bLineOfSight:General - only sources the player can see
+	inline std::atomic<bool> mixKinds{ Defaults::mixKinds };        // bMixBodiesAndContainers:General - bodies and containers in one list
+	inline std::atomic<bool> includeStealing{ Defaults::includeStealing };  // bIncludeStealing:General - rows that would be stealing are listed (red, Steal)
 
 	void Load();             // at plugin load; a missing INI or line keeps the default
 	bool Save();             // every value, keeping the file's comments; false when the file cannot be written

@@ -1,6 +1,6 @@
 {
     "name": "quicklootcontainermerge",
-    "version-string": "1.0.0",
+    "version-string": "1.1.0",
     "description": "QuickLoot Container Merge - QuickLoot IE's window also lists the items of nearby containers and corpses.",
     "homepage": "https://github.com/ApocryphaRealm/QuickLootContainerMerge",
     "license": "GPL-3.0-or-later",

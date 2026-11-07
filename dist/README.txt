@@ -5,19 +5,24 @@ Look at a chest or a body, and QuickLoot IE's window also lists what the others 
 the whole pile of bandits.
 
 WHAT GOES IN THE LIST
-On a body, the other dead bodies near you; on a container, the other containers near you. The two never mix. Near means 10 feet indoors and 35 feet outdoors by default. Empty ones add nothing.
-Locked containers, summoned creatures, merchant chests, anything marked QuickLootIE_Exclude and your own storage stay out.
+On a body, the other dead bodies near you; on a container, the other containers near you. With Mix bodies and containers switched on,
+both kinds near you share the list, whichever you look at. Near means 10 feet indoors and 35 feet outdoors by default. Empty ones add nothing.
+Locked containers, summoned creatures, merchant chests, anything marked QuickLootIE_Exclude and your own storage stay out, with
+mixing on or off.
 
 TAKING
 Every row comes from the container or body it belongs to, through the same calls QuickLoot IE uses. A row that would be stealing
 is red for its own owner, the button says Steal, and taking it is a crime as usual: the item is marked stolen and
 a witness reports it. Take All on something free takes the free rows and leaves the red ones for you to take one by one. Take All
-on something already owned by someone else takes everything, red rows too. Closing the window or looking away works as
+on something already owned by someone else takes everything, red rows too. Switch off Include items you'd have to steal and the red
+rows never appear: nearby containers that belong to someone else add nothing, and any other row that would be stealing is left
+out. What the crosshair is on still shows as QuickLoot IE shows it. Closing the window or looking away works as
 QuickLoot IE does.
 
 SETTINGS
-QuickLoot Container Merge in the Apocrypha Menu Framework: on or off, the indoor and outdoor distances, and
-whether only what you can see is listed. All of it is also in SKSE\Plugins\QuickLootContainerMerge.ini, so the mod works the same
+QuickLoot Container Merge in the Apocrypha Menu Framework: on or off, the indoor and outdoor distances, whether only what you
+can see is listed, whether bodies and containers mix (off by default), and whether items you would have to steal are listed (on
+by default). All of it is also in SKSE\Plugins\QuickLootContainerMerge.ini, so the mod works the same
 without a menu framework.
 
 REQUIREMENTS
